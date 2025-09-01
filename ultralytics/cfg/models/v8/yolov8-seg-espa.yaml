@@ -1,0 +1,58 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLOv8-seg instance segmentation model with EPSANet attention and BiFPN
+
+# Parameters
+nc: 1  # number of classes
+scales:
+  n: [0.33, 0.25, 1024]
+  s: [0.33, 0.50, 1024]
+  m: [0.67, 0.75, 768]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.25, 512]
+
+# YOLOv8.0n backbone
+backbone:
+  - [-1, 1, Conv, [64, 3, 2]]  # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]]  # 1-P2/4
+  - [-1, 3, C2f_SCConv, [128, True]]
+  - [-1, 1, Conv, [256, 3, 2]]  # 3-P3/8
+  - [-1, 6, C2f_SCConv, [256, True]]
+  - [-1, 1, Conv, [512, 3, 2]]  # 5-P4/16
+  - [-1, 6, C2f_SCConv, [512, True]]
+  - [-1, 1, Conv, [1024, 3, 2]]  # 7-P5/32
+  - [-1, 3, C2f_SCConv, [1024, True]]
+  - [-1, 1, SPPF, [1024, 5]]  # 9
+  - [-1, 1, EPSANet, [1024]]  # 10: Add EPSANet attention
+  - [-1, 1, BiFPN, [1024, 512, 3]]  # 11: BiFPN
+
+# YOLOv8.0n head
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 12
+  - [[-1, 6], 1, Concat, [1]]  # 13
+  - [-1, 3, C2f, [512]]  # 14
+  - [-1, 1, EPSANet, [512]]  # 15
+  - [-1, 1, BiFPN, [512, 256, 3]]  # 16
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]  # 17
+  - [[-1, 4], 1, Concat, [1]]  # 18
+  - [-1, 3, C2f, [256]]  # 19
+  - [-1, 1, EPSANet, [256]]  # 20
+  - [-1, 1, BiFPN, [256, 256, 3]]  # 21
+
+  - [-1, 1, Conv, [256, 3, 2]]  # 22
+  - [[-1, 14], 1, Concat, [1]]  # 23
+  - [-1, 3, C2f, [512]]  # 24
+  - [-1, 1, EPSANet, [512]]  # 25
+
+  - [-1, 1, Conv, [512, 3, 2]]  # 26
+  - [[-1, 11], 1, Concat, [1]]  # 27
+  - [-1, 3, C2f, [1024]]  # 28
+  - [-1, 1, EPSANet, [1024]]  # 29
+
+  - [[21, 16, 29], 1, Segment, [nc, 32, 256]]  # 30: Segment(P3, P4, P5)
+
+loss:
+  type: FocalLoss
+  alpha: 0.25
+  gamma: 2.0
+  reduction: 'sum'

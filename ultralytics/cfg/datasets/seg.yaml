@@ -1,0 +1,8 @@
+train: /home/air/projects/ultralytics-main/data/images/train  # train images (relative to 'path') 128 images
+val: /home/air/projects/ultralytics-main/data/images/val # val images (relative to 'path') 128 images
+#test: D:\ultralytics-main\data\split\images\test # test images (optional)
+
+# Classes
+names:
+  0: 0
+
